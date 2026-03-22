@@ -72,12 +72,28 @@ export default function AuthPage() {
       <div className="w-full max-w-sm">
         {/* Language toggle */}
         <div className="flex justify-end mb-4">
-          <button
-            onClick={() => setLanguage(language === 'ko' ? 'en' : 'ko')}
-            className="text-sm text-gray-400 hover:text-gray-600 font-medium px-2 py-1 rounded-lg border border-gray-200 bg-white"
-          >
-            {language === 'ko' ? 'EN' : '한국어'}
-          </button>
+          <div className="flex items-center bg-gray-200 rounded-lg p-0.5 gap-0.5">
+            <button
+              onClick={() => setLanguage('ko')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                language === 'ko'
+                  ? 'bg-white text-indigo-600 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              한국어
+            </button>
+            <button
+              onClick={() => setLanguage('en')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                language === 'en'
+                  ? 'bg-white text-indigo-600 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              ENG
+            </button>
+          </div>
         </div>
 
         {/* Logo */}
