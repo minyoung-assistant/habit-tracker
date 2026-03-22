@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { Habit, HabitLog } from '@/lib/types'
 import BottomNav from '@/components/BottomNav'
-import PushNotificationSetup from '@/components/PushNotificationSetup'
 import { format } from 'date-fns'
 import { ko, enUS } from 'date-fns/locale'
 import { useLanguage } from '@/lib/LanguageContext'
@@ -15,7 +14,6 @@ export default function DashboardPage() {
   const [habits, setHabits] = useState<Habit[]>([])
   const [logs, setLogs] = useState<HabitLog[]>([])
   const [loading, setLoading] = useState(true)
-  const [userEmail, setUserEmail] = useState('')
   const today = format(new Date(), 'yyyy-MM-dd')
   const { language, setLanguage, t } = useLanguage()
 
@@ -27,7 +25,6 @@ export default function DashboardPage() {
         router.push('/auth')
         return
       }
-      setUserEmail(session.user.email ?? '')
 
       const { data: habitsData } = await supabase
         .from('habits')
@@ -40,15 +37,9 @@ export default function DashboardPage() {
         .select('*')
         .eq('date', today)
 
-      const h = habitsData ?? []
-      setHabits(h)
+      setHabits(habitsData ?? [])
       setLogs(logsData ?? [])
       setLoading(false)
-
-      // Store notify times for local notification scheduling
-      localStorage.setItem('habit_notify_times', JSON.stringify(
-        h.filter((x) => x.is_active).map((x) => ({ name: x.name, time: x.notify_time }))
-      ))
     })
   }, [router, today])
 
@@ -81,25 +72,6 @@ export default function DashboardPage() {
     router.push('/auth')
   }
 
-  const testNotification = async () => {
-    if (Notification.permission !== 'granted') {
-      const result = await Notification.requestPermission()
-      if (result !== 'granted') {
-        alert(language === 'ko' ? '알림 권한을 허용해주세요.' : 'Please allow notifications.')
-        return
-      }
-    }
-    try {
-      new Notification('Habit Tracker', {
-        body: language === 'ko' ? '알림 테스트 성공! 🎉' : 'Notification test success! 🎉',
-        icon: '/icons/icon-192.png',
-      })
-    } catch (e) {
-      console.error('Notification error:', e)
-      alert(language === 'ko' ? `알림 오류: ${e}` : `Notification error: ${e}`)
-    }
-  }
-
   const completedCount = habits.filter((h) =>
     logs.find((l) => l.habit_id === h.id && l.completed)
   ).length
@@ -118,7 +90,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      <PushNotificationSetup />
       {/* Header */}
       <div className="bg-white border-b border-gray-100 px-4 pt-12 pb-4">
         <div className="max-w-lg mx-auto flex items-center justify-between">
@@ -127,13 +98,6 @@ export default function DashboardPage() {
             <h1 className="text-xl font-bold text-gray-900">{t('dashboard.title')}</h1>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={testNotification}
-              className="text-xs text-gray-400 hover:text-gray-600 font-medium px-2 py-1 rounded-lg border border-gray-200 bg-white"
-              title={language === 'ko' ? '알림 테스트' : 'Test notification'}
-            >
-              🔔
-            </button>
             <button
               onClick={() => setLanguage(language === 'ko' ? 'en' : 'ko')}
               className="text-xs text-gray-400 hover:text-gray-600 font-medium px-2 py-1 rounded-lg border border-gray-200 bg-white"
@@ -193,9 +157,7 @@ export default function DashboardPage() {
                   key={habit.id}
                   onClick={() => toggleHabit(habit.id)}
                   className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
-                    completed
-                      ? 'bg-white border-indigo-200'
-                      : 'bg-white border-gray-100'
+                    completed ? 'bg-white border-indigo-200' : 'bg-white border-gray-100'
                   }`}
                 >
                   <div
