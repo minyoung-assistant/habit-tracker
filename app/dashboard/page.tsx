@@ -83,14 +83,21 @@ export default function DashboardPage() {
 
   const testNotification = async () => {
     if (Notification.permission !== 'granted') {
-      alert(language === 'ko' ? '먼저 알림 권한을 허용해주세요.' : 'Please allow notifications first.')
-      return
+      const result = await Notification.requestPermission()
+      if (result !== 'granted') {
+        alert(language === 'ko' ? '알림 권한을 허용해주세요.' : 'Please allow notifications.')
+        return
+      }
     }
-    const reg = await navigator.serviceWorker.ready
-    reg.showNotification('Habit Tracker', {
-      body: language === 'ko' ? '알림 테스트 성공! 🎉' : 'Notification test success! 🎉',
-      icon: '/icons/icon-192.png',
-    })
+    try {
+      new Notification('Habit Tracker', {
+        body: language === 'ko' ? '알림 테스트 성공! 🎉' : 'Notification test success! 🎉',
+        icon: '/icons/icon-192.png',
+      })
+    } catch (e) {
+      console.error('Notification error:', e)
+      alert(language === 'ko' ? `알림 오류: ${e}` : `Notification error: ${e}`)
+    }
   }
 
   const completedCount = habits.filter((h) =>

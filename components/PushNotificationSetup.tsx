@@ -5,20 +5,15 @@ import { useLanguage } from '@/lib/LanguageContext'
 
 export default function PushNotificationSetup() {
   const [permission, setPermission] = useState<NotificationPermission>('default')
-  const [swReady, setSwReady] = useState(false)
-  const [swReg, setSwReg] = useState<ServiceWorkerRegistration | null>(null)
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   useEffect(() => {
-    if ('serviceWorker' in navigator && 'Notification' in window) {
-      setPermission(Notification.permission)
+    if (!('Notification' in window)) return
+    setPermission(Notification.permission)
 
-      navigator.serviceWorker.register('/sw.js').then((reg) => {
-        setSwReady(true)
-        setSwReg(reg)
-      }).catch((err) => {
-        console.error('SW registration failed', err)
-      })
+    // Register service worker (for PWA, not required for notifications)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {})
     }
   }, [])
 
@@ -27,52 +22,46 @@ export default function PushNotificationSetup() {
     setPermission(result)
   }
 
+  // Check every 10 seconds and fire notification if time matches
   useEffect(() => {
-    if (!swReady || permission !== 'granted') return
+    if (permission !== 'granted') return
 
-    // Track which habits were already notified today to avoid duplicates
     const notifiedKey = () => `notified_${new Date().toISOString().slice(0, 10)}`
 
     const checkAndNotify = () => {
       const now = new Date()
-      const HH = String(now.getHours()).padStart(2, '0')
-      const MM = String(now.getMinutes()).padStart(2, '0')
-      const currentTime = `${HH}:${MM}`
+      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
 
       const stored = localStorage.getItem('habit_notify_times')
       if (!stored) return
 
       const notifiedToday: string[] = JSON.parse(localStorage.getItem(notifiedKey()) || '[]')
-
       const times: { name: string; time: string }[] = JSON.parse(stored)
+
+      console.log('[HabitTracker] 알림 체크:', currentTime, '| 등록된 습관:', times)
+
       times.forEach(({ name, time }) => {
         const notifId = `${name}_${time}`
         if (time === currentTime && !notifiedToday.includes(notifId)) {
-          // Use Service Worker showNotification for better Safari compatibility
-          if (swReg) {
-            swReg.showNotification('Habit Tracker', {
-              body: `${name} ✓`,
-              icon: '/icons/icon-192.png',
-            })
-          } else {
+          console.log('[HabitTracker] 알림 발송:', name)
+          try {
             new Notification('Habit Tracker', {
-              body: `${name} ✓`,
+              body: language === 'ko' ? `${name} 할 시간이에요! ✓` : `Time for: ${name} ✓`,
               icon: '/icons/icon-192.png',
             })
+            notifiedToday.push(notifId)
+            localStorage.setItem(notifiedKey(), JSON.stringify(notifiedToday))
+          } catch (e) {
+            console.error('[HabitTracker] 알림 오류:', e)
           }
-          // Mark as notified today
-          notifiedToday.push(notifId)
-          localStorage.setItem(notifiedKey(), JSON.stringify(notifiedToday))
         }
       })
     }
 
-    // Check every 10 seconds to avoid missing the exact minute
     const interval = setInterval(checkAndNotify, 10000)
-    // Also check immediately on mount
-    checkAndNotify()
+    checkAndNotify() // 즉시 한 번 체크
     return () => clearInterval(interval)
-  }, [swReady, swReg, permission])
+  }, [permission, language])
 
   if (permission === 'granted' || !('Notification' in window)) return null
 
