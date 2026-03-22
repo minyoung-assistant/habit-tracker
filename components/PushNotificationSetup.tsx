@@ -6,6 +6,7 @@ import { useLanguage } from '@/lib/LanguageContext'
 export default function PushNotificationSetup() {
   const [permission, setPermission] = useState<NotificationPermission>('default')
   const [swReady, setSwReady] = useState(false)
+  const [swReg, setSwReg] = useState<ServiceWorkerRegistration | null>(null)
   const { t } = useLanguage()
 
   useEffect(() => {
@@ -14,7 +15,7 @@ export default function PushNotificationSetup() {
 
       navigator.serviceWorker.register('/sw.js').then((reg) => {
         setSwReady(true)
-        console.log('Service Worker registered', reg)
+        setSwReg(reg)
       }).catch((err) => {
         console.error('SW registration failed', err)
       })
@@ -26,11 +27,12 @@ export default function PushNotificationSetup() {
     setPermission(result)
   }
 
-  // Schedule local notifications based on habit notify_time
   useEffect(() => {
     if (!swReady || permission !== 'granted') return
 
-    // This is a client-side scheduler that fires notifications at the right time
+    // Track which habits were already notified today to avoid duplicates
+    const notifiedKey = () => `notified_${new Date().toISOString().slice(0, 10)}`
+
     const checkAndNotify = () => {
       const now = new Date()
       const HH = String(now.getHours()).padStart(2, '0')
@@ -40,20 +42,37 @@ export default function PushNotificationSetup() {
       const stored = localStorage.getItem('habit_notify_times')
       if (!stored) return
 
+      const notifiedToday: string[] = JSON.parse(localStorage.getItem(notifiedKey()) || '[]')
+
       const times: { name: string; time: string }[] = JSON.parse(stored)
       times.forEach(({ name, time }) => {
-        if (time === currentTime) {
-          new Notification('Habit Tracker', {
-            body: `${name} ✓`,
-            icon: '/icons/icon-192.png',
-          })
+        const notifId = `${name}_${time}`
+        if (time === currentTime && !notifiedToday.includes(notifId)) {
+          // Use Service Worker showNotification for better Safari compatibility
+          if (swReg) {
+            swReg.showNotification('Habit Tracker', {
+              body: `${name} ✓`,
+              icon: '/icons/icon-192.png',
+            })
+          } else {
+            new Notification('Habit Tracker', {
+              body: `${name} ✓`,
+              icon: '/icons/icon-192.png',
+            })
+          }
+          // Mark as notified today
+          notifiedToday.push(notifId)
+          localStorage.setItem(notifiedKey(), JSON.stringify(notifiedToday))
         }
       })
     }
 
-    const interval = setInterval(checkAndNotify, 60000)
+    // Check every 10 seconds to avoid missing the exact minute
+    const interval = setInterval(checkAndNotify, 10000)
+    // Also check immediately on mount
+    checkAndNotify()
     return () => clearInterval(interval)
-  }, [swReady, permission])
+  }, [swReady, swReg, permission])
 
   if (permission === 'granted' || !('Notification' in window)) return null
 

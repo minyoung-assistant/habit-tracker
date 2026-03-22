@@ -81,6 +81,18 @@ export default function DashboardPage() {
     router.push('/auth')
   }
 
+  const testNotification = async () => {
+    if (Notification.permission !== 'granted') {
+      alert(language === 'ko' ? '먼저 알림 권한을 허용해주세요.' : 'Please allow notifications first.')
+      return
+    }
+    const reg = await navigator.serviceWorker.ready
+    reg.showNotification('Habit Tracker', {
+      body: language === 'ko' ? '알림 테스트 성공! 🎉' : 'Notification test success! 🎉',
+      icon: '/icons/icon-192.png',
+    })
+  }
+
   const completedCount = habits.filter((h) =>
     logs.find((l) => l.habit_id === h.id && l.completed)
   ).length
@@ -108,6 +120,13 @@ export default function DashboardPage() {
             <h1 className="text-xl font-bold text-gray-900">{t('dashboard.title')}</h1>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={testNotification}
+              className="text-xs text-gray-400 hover:text-gray-600 font-medium px-2 py-1 rounded-lg border border-gray-200 bg-white"
+              title={language === 'ko' ? '알림 테스트' : 'Test notification'}
+            >
+              🔔
+            </button>
             <button
               onClick={() => setLanguage(language === 'ko' ? 'en' : 'ko')}
               className="text-xs text-gray-400 hover:text-gray-600 font-medium px-2 py-1 rounded-lg border border-gray-200 bg-white"
