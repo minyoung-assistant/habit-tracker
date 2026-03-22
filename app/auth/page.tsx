@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import { useLanguage } from '@/lib/LanguageContext'
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
@@ -12,6 +13,7 @@ export default function AuthPage() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const router = useRouter()
+  const { language, setLanguage, t } = useLanguage()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,16 +26,16 @@ export default function AuthPage() {
     if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
-        setError('이메일 또는 비밀번호가 올바르지 않습니다.')
+        setError(t('auth.error_login'))
       } else {
         router.push('/dashboard')
       }
     } else {
       const { error } = await supabase.auth.signUp({ email, password })
       if (error) {
-        setError('회원가입에 실패했습니다. 다시 시도해주세요.')
+        setError(t('auth.error_signup'))
       } else {
-        setMessage('이메일을 확인해주세요. 인증 링크가 발송되었습니다.')
+        setMessage(t('auth.success_signup'))
       }
     }
 
@@ -43,13 +45,23 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm">
+        {/* Language toggle */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setLanguage(language === 'ko' ? 'en' : 'ko')}
+            className="text-sm text-gray-400 hover:text-gray-600 font-medium px-2 py-1 rounded-lg border border-gray-200 bg-white"
+          >
+            {language === 'ko' ? 'EN' : '한국어'}
+          </button>
+        </div>
+
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-500 mb-4">
             <span className="text-3xl">✓</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Habit Tracker</h1>
-          <p className="text-gray-500 mt-1">매일 습관을 기록하고 성장하세요</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('auth.title')}</h1>
+          <p className="text-gray-500 mt-1">{t('auth.subtitle')}</p>
         </div>
 
         {/* Card */}
@@ -62,7 +74,7 @@ export default function AuthPage() {
                 isLogin ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500'
               }`}
             >
-              로그인
+              {t('auth.login')}
             </button>
             <button
               onClick={() => { setIsLogin(false); setError(''); setMessage('') }}
@@ -70,13 +82,13 @@ export default function AuthPage() {
                 !isLogin ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500'
               }`}
             >
-              회원가입
+              {t('auth.signup')}
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.email')}</label>
               <input
                 type="email"
                 value={email}
@@ -87,13 +99,13 @@ export default function AuthPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.password')}</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                placeholder="6자 이상"
+                placeholder={t('auth.passwordPlaceholder')}
                 minLength={6}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
               />
@@ -115,7 +127,7 @@ export default function AuthPage() {
               disabled={loading}
               className="w-full py-3 bg-indigo-500 text-white font-semibold rounded-xl hover:bg-indigo-600 disabled:opacity-50 transition-colors"
             >
-              {loading ? '처리 중...' : isLogin ? '로그인' : '회원가입'}
+              {loading ? t('auth.loading') : isLogin ? t('auth.submit_login') : t('auth.submit_signup')}
             </button>
           </form>
         </div>

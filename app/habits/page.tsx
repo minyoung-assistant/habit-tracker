@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { Habit } from '@/lib/types'
 import BottomNav from '@/components/BottomNav'
+import { useLanguage } from '@/lib/LanguageContext'
 
 const COLORS = [
   '#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6',
@@ -24,6 +25,7 @@ export default function HabitsPage() {
   const [color, setColor] = useState(COLORS[0])
   const [notifyTime, setNotifyTime] = useState('09:00')
   const [saving, setSaving] = useState(false)
+  const { t } = useLanguage()
 
   useEffect(() => {
     const supabase = createClient()
@@ -88,7 +90,7 @@ export default function HabitsPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('정말 삭제하시겠어요? 관련 기록도 모두 삭제됩니다.')) return
+    if (!confirm(t('habits.delete_confirm'))) return
     const supabase = createClient()
     await supabase.from('habits').delete().eq('id', id)
     setHabits(habits.filter((h) => h.id !== id))
@@ -101,7 +103,7 @@ export default function HabitsPage() {
       {/* Header */}
       <div className="bg-white border-b border-gray-100 px-4 pt-12 pb-4">
         <div className="max-w-lg mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900">내 습관</h1>
+          <h1 className="text-xl font-bold text-gray-900">{t('habits.title')}</h1>
           <button
             onClick={openCreate}
             className="w-9 h-9 rounded-full bg-indigo-500 text-white text-xl flex items-center justify-center hover:bg-indigo-600 transition-colors"
@@ -115,8 +117,8 @@ export default function HabitsPage() {
         {habits.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-4xl mb-4">📋</p>
-            <p className="text-gray-600 font-medium mb-2">등록된 습관이 없어요</p>
-            <p className="text-gray-400 text-sm mb-6">+ 버튼을 눌러 첫 번째 습관을 추가해보세요</p>
+            <p className="text-gray-600 font-medium mb-2">{t('habits.empty_title')}</p>
+            <p className="text-gray-400 text-sm mb-6">{t('habits.empty_desc')}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -133,7 +135,7 @@ export default function HabitsPage() {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900">{habit.name}</p>
                     {habit.description && <p className="text-sm text-gray-400 truncate">{habit.description}</p>}
-                    <p className="text-xs text-gray-300 mt-0.5">알림: {habit.notify_time}</p>
+                    <p className="text-xs text-gray-300 mt-0.5">{t('habits.notify_prefix')}{habit.notify_time}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -162,34 +164,34 @@ export default function HabitsPage() {
           >
             <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
             <h2 className="text-lg font-bold text-gray-900 mb-6">
-              {formMode === 'create' ? '새 습관 추가' : '습관 수정'}
+              {formMode === 'create' ? t('habits.new_habit') : t('habits.edit_habit')}
             </h2>
 
             <div className="flex flex-col gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">습관 이름 *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('habits.name_label')}</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="예: 물 2L 마시기"
+                  placeholder={t('habits.name_placeholder')}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">설명 (선택)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('habits.desc_label')}</label>
                 <input
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="예: 하루 종일 수분 보충"
+                  placeholder={t('habits.desc_placeholder')}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">알림 시간</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('habits.notify_label')}</label>
                 <input
                   type="time"
                   value={notifyTime}
@@ -199,7 +201,7 @@ export default function HabitsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">색상</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('habits.color_label')}</label>
                 <div className="flex gap-2 flex-wrap">
                   {COLORS.map((c) => (
                     <button
@@ -217,14 +219,14 @@ export default function HabitsPage() {
                   onClick={closeForm}
                   className="flex-1 py-3 border border-gray-200 text-gray-600 rounded-xl font-medium hover:bg-gray-50"
                 >
-                  취소
+                  {t('habits.cancel')}
                 </button>
                 <button
                   onClick={handleSave}
                   disabled={saving || !name.trim()}
                   className="flex-1 py-3 bg-indigo-500 text-white rounded-xl font-medium hover:bg-indigo-600 disabled:opacity-50"
                 >
-                  {saving ? '저장 중...' : '저장'}
+                  {saving ? t('habits.saving') : t('habits.save')}
                 </button>
               </div>
             </div>

@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useLanguage } from '@/lib/LanguageContext'
 
 export default function PushNotificationSetup() {
   const [permission, setPermission] = useState<NotificationPermission>('default')
   const [swReady, setSwReady] = useState(false)
+  const { t } = useLanguage()
 
   useEffect(() => {
     if ('serviceWorker' in navigator && 'Notification' in window) {
@@ -42,7 +44,7 @@ export default function PushNotificationSetup() {
       times.forEach(({ name, time }) => {
         if (time === currentTime) {
           new Notification('Habit Tracker', {
-            body: `${name} 할 시간이에요! ✓`,
+            body: `${name} ✓`,
             icon: '/icons/icon-192.png',
           })
         }
@@ -60,14 +62,14 @@ export default function PushNotificationSetup() {
       <div className="bg-indigo-500 text-white rounded-2xl p-4 flex items-center gap-3 shadow-lg">
         <span className="text-2xl">🔔</span>
         <div className="flex-1">
-          <p className="font-semibold text-sm">알림 허용하기</p>
-          <p className="text-indigo-200 text-xs">습관 시간에 맞춰 알림을 받으세요</p>
+          <p className="font-semibold text-sm">{t('push.title')}</p>
+          <p className="text-indigo-200 text-xs">{t('push.desc')}</p>
         </div>
         <button
           onClick={requestPermission}
           className="bg-white text-indigo-500 text-sm font-semibold px-3 py-1.5 rounded-lg"
         >
-          허용
+          {t('push.allow')}
         </button>
       </div>
     </div>

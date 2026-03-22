@@ -7,7 +7,8 @@ import { Habit, HabitLog } from '@/lib/types'
 import BottomNav from '@/components/BottomNav'
 import PushNotificationSetup from '@/components/PushNotificationSetup'
 import { format } from 'date-fns'
-import { ko } from 'date-fns/locale'
+import { ko, enUS } from 'date-fns/locale'
+import { useLanguage } from '@/lib/LanguageContext'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -16,6 +17,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [userEmail, setUserEmail] = useState('')
   const today = format(new Date(), 'yyyy-MM-dd')
+  const { language, setLanguage, t } = useLanguage()
 
   useEffect(() => {
     const supabase = createClient()
@@ -83,7 +85,9 @@ export default function DashboardPage() {
     logs.find((l) => l.habit_id === h.id && l.completed)
   ).length
 
-  const todayLabel = format(new Date(), 'M월 d일 EEEE', { locale: ko })
+  const dateLocale = language === 'ko' ? ko : enUS
+  const dateFormat = language === 'ko' ? 'M월 d일 EEEE' : 'EEEE, MMMM d'
+  const todayLabel = format(new Date(), dateFormat, { locale: dateLocale })
 
   if (loading) {
     return (
@@ -101,14 +105,22 @@ export default function DashboardPage() {
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-400">{todayLabel}</p>
-            <h1 className="text-xl font-bold text-gray-900">오늘의 습관</h1>
+            <h1 className="text-xl font-bold text-gray-900">{t('dashboard.title')}</h1>
           </div>
-          <button
-            onClick={handleSignOut}
-            className="text-sm text-gray-400 hover:text-gray-600"
-          >
-            로그아웃
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setLanguage(language === 'ko' ? 'en' : 'ko')}
+              className="text-xs text-gray-400 hover:text-gray-600 font-medium px-2 py-1 rounded-lg border border-gray-200 bg-white"
+            >
+              {language === 'ko' ? 'EN' : '한국어'}
+            </button>
+            <button
+              onClick={handleSignOut}
+              className="text-sm text-gray-400 hover:text-gray-600"
+            >
+              {t('dashboard.logout')}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -117,7 +129,7 @@ export default function DashboardPage() {
         {habits.length > 0 && (
           <div className="bg-indigo-500 rounded-2xl p-5 mb-6 text-white">
             <div className="flex items-center justify-between mb-3">
-              <span className="font-semibold">오늘 진행률</span>
+              <span className="font-semibold">{t('dashboard.progress')}</span>
               <span className="text-indigo-200 text-sm">{completedCount} / {habits.length}</span>
             </div>
             <div className="bg-indigo-400 rounded-full h-2">
@@ -127,7 +139,7 @@ export default function DashboardPage() {
               />
             </div>
             {completedCount === habits.length && habits.length > 0 && (
-              <p className="mt-3 text-sm font-medium text-indigo-100">🎉 오늘 모든 습관 완료!</p>
+              <p className="mt-3 text-sm font-medium text-indigo-100">{t('dashboard.allDone')}</p>
             )}
           </div>
         )}
@@ -136,13 +148,13 @@ export default function DashboardPage() {
         {habits.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-4xl mb-4">🌱</p>
-            <p className="text-gray-600 font-medium mb-2">아직 등록된 습관이 없어요</p>
-            <p className="text-gray-400 text-sm mb-6">습관 탭에서 첫 번째 습관을 추가해보세요</p>
+            <p className="text-gray-600 font-medium mb-2">{t('dashboard.empty_title')}</p>
+            <p className="text-gray-400 text-sm mb-6">{t('dashboard.empty_desc')}</p>
             <button
               onClick={() => router.push('/habits')}
               className="px-6 py-3 bg-indigo-500 text-white rounded-xl font-medium hover:bg-indigo-600 transition-colors"
             >
-              습관 추가하기
+              {t('dashboard.add_habit')}
             </button>
           </div>
         ) : (

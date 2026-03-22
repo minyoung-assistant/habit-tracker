@@ -2,15 +2,17 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-
-const navItems = [
-  { href: '/dashboard', label: '오늘', icon: '☀️' },
-  { href: '/habits', label: '습관', icon: '📋' },
-  { href: '/calendar', label: '달력', icon: '📅' },
-]
+import { useLanguage } from '@/lib/LanguageContext'
 
 export default function BottomNav() {
   const pathname = usePathname()
+  const { t } = useLanguage()
+
+  const navItems = [
+    { href: '/dashboard', label: t('nav.today'), icon: '☀️' },
+    { href: '/habits', label: t('nav.habits'), icon: '📋' },
+    { href: '/calendar', label: t('nav.calendar'), icon: '📅' },
+  ]
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe">

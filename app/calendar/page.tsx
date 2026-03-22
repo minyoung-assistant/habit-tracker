@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { Habit, HabitLog } from '@/lib/types'
 import BottomNav from '@/components/BottomNav'
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameMonth, isToday, parseISO } from 'date-fns'
-import { ko } from 'date-fns/locale'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isToday, parseISO } from 'date-fns'
+import { ko, enUS } from 'date-fns/locale'
+import { useLanguage } from '@/lib/LanguageContext'
 
 export default function CalendarPage() {
   const router = useRouter()
@@ -15,6 +16,7 @@ export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const { language, t } = useLanguage()
 
   useEffect(() => {
     const supabase = createClient()
@@ -37,7 +39,14 @@ export default function CalendarPage() {
 
   const days = eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) })
   const startDayOfWeek = getDay(startOfMonth(currentMonth))
-  const weekDays = ['일', '월', '화', '수', '목', '금', '토']
+
+  const weekDaysKo = ['일', '월', '화', '수', '목', '금', '토']
+  const weekDaysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const weekDays = language === 'ko' ? weekDaysKo : weekDaysEn
+
+  const dateLocale = language === 'ko' ? ko : enUS
+  const monthFormat = language === 'ko' ? 'yyyy년 M월' : 'MMMM yyyy'
+  const dayDetailFormat = language === 'ko' ? 'M월 d일 EEEE' : 'EEEE, MMMM d'
 
   const getDayStatus = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd')
@@ -63,7 +72,7 @@ export default function CalendarPage() {
       {/* Header */}
       <div className="bg-white border-b border-gray-100 px-4 pt-12 pb-4">
         <div className="max-w-lg mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900">달력</h1>
+          <h1 className="text-xl font-bold text-gray-900">{t('calendar.title')}</h1>
         </div>
       </div>
 
@@ -74,7 +83,7 @@ export default function CalendarPage() {
             ‹
           </button>
           <h2 className="text-base font-semibold text-gray-900">
-            {format(currentMonth, 'yyyy년 M월', { locale: ko })}
+            {format(currentMonth, monthFormat, { locale: dateLocale })}
           </h2>
           <button onClick={nextMonth} className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50">
             ›
@@ -134,11 +143,11 @@ export default function CalendarPage() {
         <div className="flex gap-4 mb-4">
           <div className="flex items-center gap-1.5 text-xs text-gray-500">
             <div className="w-2 h-2 rounded-full bg-indigo-500" />
-            <span>모두 완료</span>
+            <span>{t('calendar.legend_full')}</span>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-gray-500">
             <div className="w-2 h-2 rounded-full bg-yellow-400" />
-            <span>일부 완료</span>
+            <span>{t('calendar.legend_partial')}</span>
           </div>
         </div>
 
@@ -146,10 +155,10 @@ export default function CalendarPage() {
         {selectedDate && (
           <div className="bg-white rounded-2xl border border-gray-100 p-4">
             <h3 className="font-semibold text-gray-900 mb-3">
-              {format(parseISO(selectedDate), 'M월 d일 EEEE', { locale: ko })}
+              {format(parseISO(selectedDate), dayDetailFormat, { locale: dateLocale })}
             </h3>
             {habits.length === 0 ? (
-              <p className="text-gray-400 text-sm">등록된 습관이 없어요</p>
+              <p className="text-gray-400 text-sm">{t('calendar.no_habits')}</p>
             ) : (
               <div className="flex flex-col gap-2">
                 {habits.map((habit) => {
