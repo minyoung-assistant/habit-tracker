@@ -14,6 +14,12 @@ export type TranslationKey =
   | 'auth.error_login'
   | 'auth.error_signup'
   | 'auth.success_signup'
+  | 'auth.pw_length'
+  | 'auth.pw_uppercase'
+  | 'auth.pw_lowercase'
+  | 'auth.pw_number'
+  | 'auth.pw_special'
+  | 'auth.error_pw_weak'
   | 'nav.today'
   | 'nav.habits'
   | 'nav.calendar'
@@ -66,6 +72,12 @@ const translations: Translations = {
       error_login: '이메일 또는 비밀번호가 올바르지 않습니다.',
       error_signup: '회원가입에 실패했습니다. 다시 시도해주세요.',
       success_signup: '이메일을 확인해주세요. 인증 링크가 발송되었습니다.',
+      pw_length: '8자 이상',
+      pw_uppercase: '영문 대문자 포함',
+      pw_lowercase: '영문 소문자 포함',
+      pw_number: '숫자 포함',
+      pw_special: '특수문자 포함 (!@#$%^&* 등)',
+      error_pw_weak: '비밀번호 조건을 모두 충족해주세요.',
     },
     nav: {
       today: '오늘',
@@ -126,6 +138,12 @@ const translations: Translations = {
       error_login: 'Invalid email or password.',
       error_signup: 'Sign up failed. Please try again.',
       success_signup: 'Check your email for the confirmation link.',
+      pw_length: 'At least 8 characters',
+      pw_uppercase: 'One uppercase letter',
+      pw_lowercase: 'One lowercase letter',
+      pw_number: 'One number',
+      pw_special: 'One special character (!@#$%^&* etc.)',
+      error_pw_weak: 'Password does not meet all requirements.',
     },
     nav: {
       today: 'Today',
